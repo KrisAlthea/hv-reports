@@ -3,219 +3,613 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HV Analysis Reports | 深度研究报告库</title>
+  <title>HV Analysis | 横纵分析法深度研究智库</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #1e3a8a;
-      --primary-light: #3b82f6;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --navy: #0f172a;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-400: #94a3b8;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --surface: #ffffff;
+      --surface-elevated: #ffffff;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+      --shadow-hover: 0 12px 24px -4px rgb(37 99 235 / 0.12), 0 6px 12px -6px rgb(0 0 0 / 0.06);
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      background-color: var(--bg);
-      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--slate-50);
+      color: var(--slate-800);
       line-height: 1.6;
-      padding: 40px 20px;
+      -webkit-font-smoothing: antialiased;
     }
-    .container {
-      max-width: 900px;
+
+    /* Global Nav Header */
+    .site-header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--slate-200);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .nav-container {
+      max-width: 1280px;
       margin: 0 auto;
-    }
-    header {
-      margin-bottom: 40px;
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 20px;
-    }
-    .badge {
-      display: inline-block;
-      background: #eff6ff;
-      color: var(--primary-light);
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      margin-bottom: 12px;
-    }
-    h1 {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
-    p.subtitle {
-      color: var(--text-muted);
-      font-size: 1.05rem;
-    }
-    .report-list {
+      padding: 16px 24px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--navy);
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
       gap: 16px;
     }
+
+    .nav-link {
+      color: var(--slate-600);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .btn-github {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--navy);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-github:hover {
+      background: #334155;
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 64px 24px 40px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      color: var(--slate-700);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .hero-badge span {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .hero-title {
+      font-size: 44px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 18px;
+    }
+
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 18px;
+      color: var(--slate-600);
+      max-width: 680px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    /* Search & Filter Bar */
+    .controls-wrapper {
+      max-width: 1280px;
+      margin: 0 auto 36px;
+      padding: 0 24px;
+    }
+
+    .search-box {
+      position: relative;
+      max-width: 540px;
+      margin: 0 auto 24px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--slate-400);
+      font-size: 16px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 14px 20px 14px 48px;
+      font-size: 15px;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-full);
+      background: var(--surface);
+      color: var(--slate-900);
+      box-shadow: var(--shadow-sm);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .filter-btn {
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--slate-200);
+      background: var(--surface);
+      color: var(--slate-600);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--slate-300);
+      color: var(--slate-900);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }
+
+    /* Reports Grid */
+    .grid-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 28px;
+    }
+
+    /* Card Design */
     .report-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 28px;
       text-decoration: none;
       color: inherit;
-      transition: all 0.2s ease;
-      display: block;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
     }
+
+    .report-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), #06b6d4);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
     .report-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      border-color: var(--primary-light);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+      border-color: #cbd5e1;
     }
+
+    .report-card:hover::before {
+      opacity: 1;
+    }
+
     .card-meta {
       display: flex;
-      gap: 16px;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-bottom: 8px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
     }
+
+    .card-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.02em;
+    }
+
+    .card-date {
+      font-size: 13px;
+      color: var(--slate-400);
+    }
+
     .card-title {
-      font-size: 1.3rem;
+      font-size: 19px;
       font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 8px;
+      color: var(--navy);
+      line-height: 1.4;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+      transition: color 0.2s;
     }
+
+    .report-card:hover .card-title {
+      color: var(--primary);
+    }
+
     .card-desc {
-      color: #475569;
-      font-size: 0.95rem;
+      font-size: 14px;
+      color: var(--slate-600);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      flex-grow: 1;
     }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--slate-100);
+      font-size: 13px;
+    }
+
+    .card-author {
+      color: var(--slate-500);
+      font-weight: 500;
+    }
+
+    .card-action {
+      color: var(--primary);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: gap 0.2s;
+    }
+
+    .report-card:hover .card-action {
+      gap: 8px;
+    }
+
+    /* Footer */
     footer {
-      margin-top: 60px;
+      border-top: 1px solid var(--slate-200);
+      background: var(--surface);
+      padding: 40px 24px;
       text-align: center;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      border-top: 1px solid var(--border);
-      padding-top: 24px;
+      color: var(--slate-500);
+      font-size: 14px;
+    }
+
+    .footer-desc {
+      max-width: 600px;
+      margin: 8px auto 0;
+      color: var(--slate-400);
+      font-size: 13px;
+    }
+
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 32px;
+      }
+      .hero-desc {
+        font-size: 16px;
+      }
+      .report-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-container {
+        padding: 14px 18px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="badge">HV-ANALYSIS · 知识库</div>
-      <h1>深度研究报告专栏</h1>
-      <p class="subtitle">采用横纵分析法沉淀的行业、产品与前沿技术全景研报</p>
-    </header>
+  <!-- Global Navigation -->
+  <header class="site-header">
+    <div class="nav-container">
+      <a href="/" class="brand">
+        <div class="brand-logo">HV</div>
+        <div>
+          <span class="brand-title">HV Analysis</span>
+          <span class="brand-tag">RESEARCH</span>
+        </div>
+      </a>
+      <div class="nav-actions">
+        <a href="reports/welcome.html" class="nav-link">关于方法论</a>
+        <a href="https://github.com/KrisAlthea/hv-reports" target="_blank" class="btn-github">
+          <span>GitHub</span>
+          <span>↗</span>
+        </a>
+      </div>
+    </div>
+  </header>
 
-    <main class="report-list">
-      <div class="report-card" onclick="window.location.href='reports/fde-analysis.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 前沿职业</span>
-        </div>
-        <div class="card-title">FDE（前线部署工程师）横纵分析报告：从国防军工特种兵到 AI 商业化「最后一公里」的破局者</div>
-        <div class="card-desc">
-          Palantir 核心造血机器 FDE 的全景拆解，探讨其在 AI 时代从国防军工特种兵转型为商业化最后一公里的破局演进。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/welcome.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 创刊前言</span>
-        </div>
-        <div class="card-title">欢迎查阅横纵分析法深度研究报告</div>
-        <div class="card-desc">
-          横纵分析法通过“时间纵轴”（历史演化/关键转折）与“生态横轴”（竞争格局/核心差异）双重视角，提供深度的产业与技术洞察。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E4%B8%AD%E5%9B%BD%E5%9B%9B%E5%A4%A7%E9%85%92%E5%BA%97%E9%9B%86%E5%9B%A2%E5%9B%BD%E5%86%85%E5%B8%83%E5%B1%80%E4%B8%8E%E5%8F%91%E5%B1%95%E7%AD%96%E7%95%A5%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 消费与商业</span>
-        </div>
-        <div class="card-title">中国四大酒店集团国内布局与发展策略横纵分析报告</div>
-        <div class="card-desc">
-          锦江、华住、首旅如家与亚朵在存量博弈时代的品牌矩阵演进、下沉市场争夺与会员生态纵深对比。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E5%8D%8E%E7%BA%B3%E5%85%84%E5%BC%9F_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 传媒与文娱</span>
-        </div>
-        <div class="card-title">华纳兄弟：百年造梦巨轮的资本狂想与债务重锁</div>
-        <div class="card-desc">
-          百年好莱坞造梦巨轮从八大片厂时代到流媒体疯狂烧钱、高杠杆并购反噬及四百亿债务重锁下的破局反思。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E5%A4%A9%E6%B4%A5_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 城市与区域</span>
-        </div>
-        <div class="card-title">天津城市发展轨迹与竞争图谱深度研究报告</div>
-        <div class="card-desc">
-          近代北方工业摇篮在京津冀协同发展战略下的产业转轨、海运枢纽重塑与北方经济格局竞争图谱。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E7%83%9F%E5%8F%B0%E4%B8%9C%E6%96%B9%E5%A8%81%E6%80%9D%E9%A1%BF%E7%94%B5%E6%B0%94%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 工业与电气</span>
-        </div>
-        <div class="card-title">烟台东方威思顿电气有限公司横纵分析报告</div>
-        <div class="card-desc">
-          专注智能电网、电力计量与配电自动化的核心产品线演化、行业隐形冠军壁垒及技术突围。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E7%BE%8E%E5%9B%BD%E4%B8%BB%E8%A6%81%E5%8A%A8%E7%94%BB%E7%89%87%E5%8E%82_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 文化与动画</span>
-        </div>
-        <div class="card-title">银幕背后的造梦帝国</div>
-        <div class="card-desc">
-          银幕背后的造梦帝国：迪士尼、皮克斯、梦工厂、照明娱乐的技术演进、IP衍生链与流媒体战局推演。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E7%BE%8E%E8%81%94%E5%82%A8%E5%8A%A0%E6%81%AF%E4%B8%8E%E9%99%8D%E6%81%AF_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 宏观经济与金融</span>
-        </div>
-        <div class="card-title">美联储加息与降息：历时演进、共时格局与横纵交汇深度研究</div>
-        <div class="card-desc">
-          穿越半个世纪的利率潮汐：从大通胀沃尔克时刻到零利率QE、通胀反扑加息潮的历时演进与资产共振。
-        </div>
-      </div>
-      <div class="report-card" onclick="window.location.href='reports/%E7%BE%8E%E8%82%A1%E4%B8%89%E5%A4%A7%E6%8C%87%E6%95%B0%E4%B8%8E%E8%A1%8D%E7%94%9F%E7%94%9F%E6%80%81_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html'">
-        <div class="card-meta">
-          <span>📅 2026-09-08</span>
-          <span>✍️ WeiHaoran</span>
-          <span>🏷️ 金融与衍生品</span>
-        </div>
-        <div class="card-title">美股三大指数与衍生生态横纵分析</div>
-        <div class="card-desc">
-          道琼斯、标普500与纳斯达克100的选样加权逻辑、千亿期权衍生对冲生态与量化波动图谱。
-        </div>
-      </div>
-    </main>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span>🚀 深度智库</span> 历时演进 · 共时格局 · 严谨研报
+    </div>
+    <h1 class="hero-title">
+      透视底层逻辑，绘制<span class="gradient-text">商业与技术全景</span>
+    </h1>
+    <p class="hero-desc">
+      融合历时-共时方法论与商学院战略模型，覆盖人工智能、金融宏观、消费文娱及高新技术的纵深研究。
+    </p>
+  </section>
 
-    <footer>
-      <p>© 2026 WeiHaoran · Powered by Cloudflare Pages & hv-analysis</p>
-    </footer>
+  <!-- Controls: Search & Category Filters -->
+  <div class="controls-wrapper">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="输入关键词、行业或报告名称实时检索...">
+    </div>
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-btn active" data-filter="all">全部报告</button><button class="filter-btn" data-filter="深度研报">深度研报</button>
+    </div>
   </div>
+
+  <!-- Reports Grid Section -->
+  <main class="grid-container">
+    <div class="report-grid" id="reportGrid">
+      
+      <a href="reports/fde-analysis.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-09-08</span>
+        </div>
+        <h3 class="card-title">FDE（前线部署工程师）横纵分析报告：从国防军工特种兵到 AI 商业化「最后一公里」的破局者</h3>
+        <p class="card-desc">研究时间：2026年9月 | 所属领域：前沿科技 / 企业服务 / 人工智能商业化 | 研究对象类型：职业角色与组织工程模式</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E4%B8%AD%E5%9B%BD%E5%9B%9B%E5%A4%A7%E9%85%92%E5%BA%97%E9%9B%86%E5%9B%A2%E5%9B%BD%E5%86%85%E5%B8%83%E5%B1%80%E4%B8%8E%E5%8F%91%E5%B1%95%E7%AD%96%E7%95%A5%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">中国四大酒店集团国内布局与发展策略横纵分析报告</h3>
+        <p class="card-desc">研究时间：2026年8月 | 所属行业：中国酒店及住宿业 | 重点研究对象：华住集团、锦江酒店、首旅如家、东呈集团 报告视角：高频出差商旅人士（高铁/飞机出行）住宿品质与集团战略解构</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E5%8D%8E%E7%BA%B3%E5%85%84%E5%BC%9F_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">华纳兄弟：百年造梦巨轮的资本狂想与债务重锁</h3>
+        <p class="card-desc">华纳兄弟探索（Warner Bros. Discovery, Inc.，以下简称 WBD 或华纳）是一家拥有逾百年历史底蕴、手握 DC 漫画、哈利·波特、中土世界与 HBO 顶级剧集等世界级文化 IP 护城河，却在历...</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E5%A4%A9%E6%B4%A5_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">天津城市发展轨迹与竞争图谱深度研究报告</h3>
+        <p class="card-desc">研究时间：2026年7月 | 所属领域：城市经济 / 区域与产业发展 | 研究对象类型：城市 / 直辖市</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E7%83%9F%E5%8F%B0%E4%B8%9C%E6%96%B9%E5%A8%81%E6%80%9D%E9%A1%BF%E7%94%B5%E6%B0%94%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">烟台东方威思顿电气有限公司横纵分析报告</h3>
+        <p class="card-desc">研究时间：2026年6月 | 所属领域：智能电网与智能计量 | 研究对象类型：企业分析</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E7%BE%8E%E5%9B%BD%E4%B8%BB%E8%A6%81%E5%8A%A8%E7%94%BB%E7%89%87%E5%8E%82_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">银幕背后的造梦帝国</h3>
+        <p class="card-desc">研究时间：2026年7月 | 所属领域：文化创意与影视动画 | 研究对象类型：行业片厂横纵对比</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E7%BE%8E%E8%81%94%E5%82%A8%E5%8A%A0%E6%81%AF%E4%B8%8E%E9%99%8D%E6%81%AF_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">美联储加息与降息：历时演进、共时格局与横纵交汇深度研究</h3>
+        <p class="card-desc">研究时间：2026年7月 | 所属领域：宏观经济与央行货币政策 | 研究视角：横纵分析法 (HV-Analysis)</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+      <a href="reports/%E7%BE%8E%E8%82%A1%E4%B8%89%E5%A4%A7%E6%8C%87%E6%95%B0%E4%B8%8E%E8%A1%8D%E7%94%9F%E7%94%9F%E6%80%81_%E6%A8%AA%E7%BA%B5%E5%88%86%E6%9E%90%E6%8A%A5%E5%91%8A.html" class="report-card" data-tag="深度研报">
+        <div class="card-meta">
+          <span class="card-tag">深度研报</span>
+          <span class="card-date">📅 2026-08</span>
+        </div>
+        <h3 class="card-title">美股三大指数与衍生生态横纵分析</h3>
+        <p class="card-desc">美股三大指数（道琼斯工业平均指数、标普500指数、纳斯达克100/综合指数）及其衍生生态，是人类金融史上历经140年演变建立的、将实体经济证券化、基准化、可交易化与非线性杠杆化的宏观流动性中枢系统。</p>
+        <div class="card-footer">
+          <span class="card-author">✍️ WeiHaoran</span>
+          <span class="card-action">查阅研报 →</span>
+        </div>
+      </a>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p><strong>© 2026 WeiHaoran · HV Analysis 深度研报库</strong></p>
+    <p class="footer-desc">全托管于 Cloudflare Pages 全球 Anycast 边缘网络 · 持续更新前沿洞见</p>
+  </footer>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const filterBar = document.getElementById('filterBar');
+    const cards = document.querySelectorAll('.report-card');
+
+    let currentFilter = 'all';
+
+    function filterReports() {
+      const query = searchInput.value.toLowerCase().trim();
+
+      cards.forEach(card => {
+        const title = card.querySelector('.card-title').textContent.toLowerCase();
+        const desc = card.querySelector('.card-desc').textContent.toLowerCase();
+        const tag = card.getAttribute('data-tag');
+
+        const matchesQuery = !query || title.includes(query) || desc.includes(query) || tag.toLowerCase().includes(query);
+        const matchesCategory = currentFilter === 'all' || tag === currentFilter;
+
+        if (matchesQuery && matchesCategory) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    searchInput.addEventListener('input', filterReports);
+
+    filterBar.addEventListener('click', (e) => {
+      if (e.target.classList.contains('filter-btn')) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.getAttribute('data-filter');
+        filterReports();
+      }
+    });
+  </script>
 </body>
 </html>
