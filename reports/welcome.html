@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>欢迎查阅横纵分析法深度研究报告 | HV Analysis 深度研报</title>
-  
+  <title>横纵分析法 (HV-Analysis) 方法论与研究范式 | HV Analysis 深度研报</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #2563eb;
@@ -22,6 +21,7 @@
       --border-subtle: #f1f5f9;
       --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.05);
       --shadow-card: 0 10px 30px -5px rgba(15, 23, 42, 0.05), 0 4px 12px -2px rgba(15, 23, 42, 0.02);
+      --accent-cyan: #0284c7;
     }
 
     * {
@@ -34,23 +34,59 @@
       font-family: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: var(--bg-page);
       color: var(--text-main);
-      line-height: 1.8;
+      line-height: 1.85;
       -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    /* Reading Progress Bar */
+    #progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2563eb, #06b6d4, #10b981);
+      width: 0%;
+      z-index: 999;
+      transition: width 0.1s ease;
     }
 
     /* Top Action Bar */
     .top-nav {
       position: sticky;
       top: 0;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      padding: 14px 28px;
+      padding: 12px 32px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 100;
+    }
+
+    .nav-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--navy);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .nav-brand-badge {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #2563eb, #06b6d4);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
     }
 
     .back-link {
@@ -60,7 +96,7 @@
       color: var(--text-muted);
       text-decoration: none;
       font-weight: 500;
-      font-size: 14px;
+      font-size: 13.5px;
       transition: color 0.2s;
     }
 
@@ -78,7 +114,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       color: var(--text-main);
-      padding: 7px 16px;
+      padding: 6px 14px;
       border-radius: 9999px;
       cursor: pointer;
       font-size: 13px;
@@ -96,14 +132,14 @@
       transform: translateY(-1px);
     }
 
-    /* Main Container */
+    /* Main Article Container */
     .article-container {
-      max-width: 900px;
-      margin: 40px auto 80px;
+      max-width: 960px;
+      margin: 40px auto 90px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 64px 72px;
+      padding: 64px 76px;
       box-shadow: var(--shadow-card);
     }
 
@@ -111,18 +147,20 @@
     .report-header {
       border-bottom: 1px solid var(--border-subtle);
       padding-bottom: 36px;
-      margin-bottom: 40px;
+      margin-bottom: 44px;
     }
 
     .badge-wrap {
       display: flex;
       gap: 8px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
     }
 
     .badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       background: var(--primary-light);
       color: var(--primary);
       padding: 4px 12px;
@@ -139,20 +177,22 @@
 
     h1.report-title {
       font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
-      font-size: 34px;
+      font-size: 36px;
       font-weight: 800;
       color: var(--navy);
       line-height: 1.35;
-      letter-spacing: -0.02em;
-      margin-bottom: 20px;
+      letter-spacing: -0.025em;
+      margin-bottom: 24px;
     }
 
     .report-meta-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 24px;
       font-size: 14px;
       color: var(--text-muted);
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
     }
 
     .report-meta-bar span {
@@ -176,7 +216,7 @@
       padding-bottom: 12px;
       border-bottom: 2px solid var(--border-subtle);
       position: relative;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
     }
 
     .report-body h2::after {
@@ -194,7 +234,7 @@
       font-size: 19px;
       font-weight: 600;
       color: #1e3a8a;
-      margin: 32px 0 14px;
+      margin: 36px 0 16px;
     }
 
     .report-body h4 {
@@ -205,29 +245,30 @@
     }
 
     .report-body p {
-      margin-bottom: 20px;
-      line-height: 1.85;
+      margin-bottom: 22px;
+      line-height: 1.9;
       text-align: justify;
     }
 
     .report-body ul, .report-body ol {
-      margin: 0 0 24px 28px;
+      margin: 0 0 26px 28px;
     }
 
     .report-body li {
       margin-bottom: 10px;
-      line-height: 1.75;
+      line-height: 1.8;
     }
 
     .report-body blockquote {
       border-left: 4px solid var(--primary);
-      background: var(--primary-light);
-      padding: 18px 24px;
+      background: #f0f7ff;
+      padding: 20px 26px;
       border-radius: 0 12px 12px 0;
       color: #1e3a8a;
       font-size: 15.5px;
-      line-height: 1.75;
-      margin: 28px 0;
+      line-height: 1.8;
+      margin: 30px 0;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.05);
     }
 
     .report-body blockquote p:last-child {
@@ -239,7 +280,7 @@
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      margin: 32px 0;
+      margin: 36px 0;
       font-size: 14.5px;
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -285,20 +326,20 @@
     .report-body pre {
       background: #0f172a;
       color: #e2e8f0;
-      padding: 20px 24px;
-      border-radius: 12px;
+      padding: 22px 26px;
+      border-radius: 14px;
       overflow-x: auto;
-      margin: 28px 0;
+      margin: 30px 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 13.5px;
-      line-height: 1.6;
+      line-height: 1.65;
     }
 
     .report-body code {
       font-family: 'JetBrains Mono', monospace;
       font-size: 13.5px;
       background: #f1f5f9;
-      color: #d946ef;
+      color: #0284c7;
       padding: 2px 6px;
       border-radius: 4px;
       font-weight: 500;
@@ -313,8 +354,8 @@
 
     /* Footer in Article */
     .article-footer {
-      margin-top: 60px;
-      padding-top: 28px;
+      margin-top: 64px;
+      padding-top: 32px;
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
@@ -325,7 +366,7 @@
 
     /* Print media */
     @media print {
-      .top-nav, .print-btn, .back-link, .article-footer {
+      #progress-bar, .top-nav, .print-btn, .back-link, .article-footer {
         display: none !important;
       }
       body {
@@ -356,16 +397,21 @@
       }
     }
   </style>
-
 </head>
 <body>
+  <div id="progress-bar"></div>
+
   <nav class="top-nav">
-    <a href="/" class="back-link">
-      <span>←</span> 返回研究智库首页
+    <a href="/" class="nav-brand">
+      <div class="nav-brand-badge">HV</div>
+      <span>HV Analysis 智库</span>
     </a>
     <div class="nav-actions">
+      <a href="/" class="back-link">
+        <span>←</span> 返回智库目录
+      </a>
       <button class="print-btn" onclick="window.print()">
-        <span>🖨️ 另存为 PDF / 打印</span>
+        <span>🖨️ 导出 PDF / 打印</span>
       </button>
     </div>
   </nav>
@@ -373,39 +419,49 @@
   <article class="article-container">
     <header class="report-header">
       <div class="badge-wrap">
-        <span class="badge">横纵深度研报</span>
-        <span class="badge badge-sub">HV ANALYSIS</span>
+        <span class="badge">📊 方法论</span>
+        <span class="badge badge-sub">HORIZONTAL & VERTICAL MATRIX</span>
       </div>
-      <h1 class="report-title">欢迎查阅横纵分析法深度研究报告</h1>
+      <h1 class="report-title">横纵分析法 (HV-Analysis) 方法论与研究范式</h1>
       <div class="report-meta-bar">
-        <span>✍️ 作者：WeiHaoran</span>
-        <span>📅 归档：2026-09</span>
-        <span>🌐 形式：横纵双轴全景研报</span>
+        <span>✍️ 主理人：WeiHaoran</span>
+        <span>📅 归档期次：2026-09</span>
+        <span>🌐 范式：横纵分析法 (HV-Analysis)</span>
       </div>
     </header>
 
     <div class="report-body">
-      
-<blockquote>
+      <blockquote>
 <p>编写时间：2026-09-08 | 作者：WeiHaoran | 领域：AI前沿与科技创新</p>
 </blockquote>
 <p>欢迎访问 <strong>HV Analysis 深度研究报告专栏</strong>！本专栏基于横纵分析法（时间轴演进 + 多维生态竞争），系统拆解前沿产品、大模型生态与创新技术。</p>
-<h2>关于横纵分析法</h2>
+<h2 id="_1">关于横纵分析法</h2>
 <p>横纵分析法（Horizontal-Vertical Analysis）是一套深度透视复杂体系的研究框架：</p>
 <ol>
 <li><strong>纵向维度（时间轴演进）</strong>：沿着历史脉络，拆解技术或企业从起步、爆发到关键转折点的决策路径；</li>
 <li><strong>横向维度（多维生态图谱）</strong>：拆解同一时期的市场格局、竞争壁垒、商业模式与产业链上下游；</li>
 <li><strong>横纵交汇（破局与未来预测）</strong>：探究质变时刻的根本推力，推演下一步行业走向。</li>
 </ol>
-<h2>研报发布与订阅</h2>
+<h2 id="_2">研报发布与订阅</h2>
 <p>所有研报均由自动化工作流生成，支持精美杂志排版在线阅读与高清矢量 PDF 下载。更多精彩内容即将陆续发布！</p>
-
     </div>
 
     <footer class="article-footer">
-      <div>HV Analysis · 深度洞见驱动决策</div>
-      <div>基于横纵分析法研究范式</div>
+      <div>© 2026 HV Analysis · 深度洞见驱动理性决策</div>
+      <div>全托管于 Cloudflare Pages 全球 Anycast 边缘网络</div>
     </footer>
   </article>
+
+  <script>
+    window.addEventListener('scroll', () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      const bar = document.getElementById('progress-bar');
+      if (bar) {
+        bar.style.width = scrolled + '%';
+      }
+    });
+  </script>
 </body>
 </html>
