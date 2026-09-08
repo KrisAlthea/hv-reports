@@ -1,4 +1,35 @@
-<!DOCTYPE html>
+import json, os, glob, re
+from bs4 import BeautifulSoup
+
+INDEX_HTML_PATH = '/root/projects/hv-reports/index.html'
+SEARCH_INDEX_PATH = '/root/projects/hv-reports/search-index.json'
+
+with open(SEARCH_INDEX_PATH, 'r', encoding='utf-8') as f:
+    reports_data = json.load(f)
+
+# Build Cards HTML
+cards_html_list = []
+for r in reports_data:
+    card = f'''        <a href="{r['url']}" class="report-card" data-category="{r['cat']}" data-tag="{r['tag']}">
+          <div class="card-meta">
+            <span class="card-tag">{r['icon']} {r['tag']}</span>
+            <div class="card-meta-right">
+              <span class="card-read-time">⏱️ {r['min']} min</span>
+              <span class="card-date">{r['date']}</span>
+            </div>
+          </div>
+          <h3 class="card-title">{r['title']}</h3>
+          <p class="card-desc">{r['summary'][:130]}...</p>
+          <div class="card-footer">
+            <span class="card-author">✍️ WeiHaoran</span>
+            <span class="card-action">查阅研报 →</span>
+          </div>
+        </a>'''
+    cards_html_list.append(card)
+
+cards_html = '\n\n'.join(cards_html_list)
+
+full_html = f'''<!DOCTYPE html>
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -10,7 +41,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
   <style>
-    :root {
+    :root {{
       --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
 
@@ -39,9 +70,9 @@
       --radius-lg: 16px;
       --radius-full: 9999px;
       --header-blur: blur(12px);
-    }
+    }}
 
-    [data-theme="dark"] {
+    [data-theme="dark"] {{
       --bg-base: #090d16;
       --bg-surface: #0f172a;
       --bg-surface-elevated: #1e293b;
@@ -60,11 +91,11 @@
       --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
       --shadow-hover: 0 12px 24px -4px rgba(0,0,0,0.5);
       --shadow-modal: 0 25px 50px -12px rgba(0,0,0,0.7);
-    }
+    }}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
-    body {
+    body {{
       font-family: var(--font-sans);
       background-color: var(--bg-base);
       color: var(--text-main);
@@ -74,10 +105,10 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-    }
+    }}
 
     /* Global Header */
-    .site-header {
+    .site-header {{
       position: sticky;
       top: 0;
       z-index: 50;
@@ -86,30 +117,30 @@
       -webkit-backdrop-filter: var(--header-blur);
       border-bottom: 1px solid var(--border);
       transition: background 0.25s ease, border-color 0.25s ease;
-    }
+    }}
 
-    [data-theme="dark"] .site-header {
+    [data-theme="dark"] .site-header {{
       background: rgba(15, 23, 42, 0.85);
-    }
+    }}
 
-    .nav-container {
+    .nav-container {{
       max-width: 1280px;
       margin: 0 auto;
       padding: 14px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-    }
+    }}
 
-    .brand {
+    .brand {{
       display: flex;
       align-items: center;
       gap: 12px;
       text-decoration: none;
       color: inherit;
-    }
+    }}
 
-    .brand-logo {
+    .brand-logo {{
       width: 34px;
       height: 34px;
       background: linear-gradient(135deg, #1e3a8a, var(--primary));
@@ -122,16 +153,16 @@
       font-size: 14px;
       letter-spacing: -0.5px;
       box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-    }
+    }}
 
-    .brand-title {
+    .brand-title {{
       font-size: 17px;
       font-weight: 700;
       color: var(--text-main);
       letter-spacing: -0.02em;
-    }
+    }}
 
-    .brand-tag {
+    .brand-tag {{
       font-size: 10px;
       font-weight: 700;
       color: var(--primary);
@@ -139,15 +170,15 @@
       padding: 2px 6px;
       border-radius: var(--radius-sm);
       margin-left: 6px;
-    }
+    }}
 
-    .nav-actions {
+    .nav-actions {{
       display: flex;
       align-items: center;
       gap: 12px;
-    }
+    }}
 
-    .nav-link {
+    .nav-link {{
       color: var(--text-muted);
       text-decoration: none;
       font-size: 13.5px;
@@ -155,13 +186,13 @@
       padding: 6px 12px;
       border-radius: var(--radius-sm);
       transition: color 0.15s;
-    }
+    }}
 
-    .nav-link:hover {
+    .nav-link:hover {{
       color: var(--primary);
-    }
+    }}
 
-    .btn-theme-toggle {
+    .btn-theme-toggle {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -174,14 +205,14 @@
       cursor: pointer;
       font-size: 16px;
       transition: all 0.2s;
-    }
+    }}
 
-    .btn-theme-toggle:hover {
+    .btn-theme-toggle:hover {{
       border-color: var(--border-focus);
       color: var(--text-main);
-    }
+    }}
 
-    .btn-github {
+    .btn-github {{
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -193,22 +224,22 @@
       font-weight: 600;
       text-decoration: none;
       transition: all 0.2s;
-    }
+    }}
 
-    .btn-github:hover {
+    .btn-github:hover {{
       opacity: 0.9;
       transform: translateY(-1px);
-    }
+    }}
 
     /* Hero Section */
-    .hero {
+    .hero {{
       max-width: 1280px;
       margin: 0 auto;
       padding: 56px 24px 32px;
       text-align: center;
-    }
+    }}
 
-    .hero-badge {
+    .hero-badge {{
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -220,50 +251,50 @@
       color: var(--text-muted);
       margin-bottom: 20px;
       box-shadow: var(--shadow-sm);
-    }
+    }}
 
-    .hero-badge span {
+    .hero-badge span {{
       color: var(--primary);
       font-weight: 700;
-    }
+    }}
 
-    .hero-title {
+    .hero-title {{
       font-size: 42px;
       font-weight: 800;
       color: var(--text-main);
       letter-spacing: -0.03em;
       line-height: 1.25;
       margin-bottom: 16px;
-    }
+    }}
 
-    .gradient-text {
+    .gradient-text {{
       background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-    }
+    }}
 
-    .hero-desc {
+    .hero-desc {{
       font-size: 17px;
       color: var(--text-muted);
       max-width: 680px;
       margin: 0 auto 32px;
       line-height: 1.6;
-    }
+    }}
 
     /* Search & Filter Controls */
-    .controls-wrapper {
+    .controls-wrapper {{
       max-width: 1280px;
       margin: 0 auto 36px;
       padding: 0 24px;
-    }
+    }}
 
-    .search-container {
+    .search-container {{
       position: relative;
       max-width: 580px;
       margin: 0 auto 20px;
-    }
+    }}
 
-    .search-input-box {
+    .search-input-box {{
       width: 100%;
       padding: 13px 90px 13px 44px;
       font-size: 14.5px;
@@ -275,23 +306,23 @@
       outline: none;
       transition: all 0.2s ease;
       cursor: pointer;
-    }
+    }}
 
-    .search-input-box:focus {
+    .search-input-box:focus {{
       border-color: var(--border-focus);
       box-shadow: 0 0 0 3px var(--primary-subtle);
-    }
+    }}
 
-    .search-icon {
+    .search-icon {{
       position: absolute;
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-faint);
       font-size: 16px;
-    }
+    }}
 
-    .kbd-shortcut {
+    .kbd-shortcut {{
       position: absolute;
       right: 14px;
       top: 50%;
@@ -304,16 +335,16 @@
       font-family: var(--font-mono);
       color: var(--text-muted);
       font-weight: 600;
-    }
+    }}
 
-    .filter-bar {
+    .filter-bar {{
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 8px;
-    }
+    }}
 
-    .filter-btn {
+    .filter-btn {{
       padding: 6px 15px;
       font-size: 13px;
       font-weight: 500;
@@ -323,36 +354,36 @@
       color: var(--text-muted);
       cursor: pointer;
       transition: all 0.2s ease;
-    }
+    }}
 
-    .filter-btn:hover {
+    .filter-btn:hover {{
       border-color: var(--border-focus);
       color: var(--text-main);
-    }
+    }}
 
-    .filter-btn.active {
+    .filter-btn.active {{
       background: var(--primary);
       color: white;
       border-color: var(--primary);
       font-weight: 600;
       box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-    }
+    }}
 
     /* Reports Grid */
-    .grid-container {
+    .grid-container {{
       max-width: 1280px;
       margin: 0 auto;
       padding: 0 24px 80px;
       flex: 1;
-    }
+    }}
 
-    .report-grid {
+    .report-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 24px;
-    }
+    }}
 
-    .report-card {
+    .report-card {{
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
@@ -366,9 +397,9 @@
       position: relative;
       overflow: hidden;
       box-shadow: var(--shadow-sm);
-    }
+    }}
 
-    .report-card::before {
+    .report-card::before {{
       content: "";
       position: absolute;
       top: 0;
@@ -378,32 +409,32 @@
       background: linear-gradient(90deg, var(--primary), #06b6d4);
       opacity: 0;
       transition: opacity 0.25s ease;
-    }
+    }}
 
-    .report-card:hover {
+    .report-card:hover {{
       transform: translateY(-3px);
       box-shadow: var(--shadow-hover);
       border-color: var(--border-focus);
-    }
+    }}
 
-    .report-card:hover::before {
+    .report-card:hover::before {{
       opacity: 1;
-    }
+    }}
 
-    .card-meta {
+    .card-meta {{
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
-    }
+    }}
 
-    .card-meta-right {
+    .card-meta-right {{
       display: flex;
       align-items: center;
       gap: 8px;
-    }
+    }}
 
-    .card-tag {
+    .card-tag {{
       display: inline-flex;
       align-items: center;
       gap: 4px;
@@ -413,19 +444,19 @@
       background: var(--primary-subtle);
       padding: 3px 9px;
       border-radius: var(--radius-full);
-    }
+    }}
 
-    .card-read-time {
+    .card-read-time {{
       font-size: 11.5px;
       color: var(--text-faint);
-    }
+    }}
 
-    .card-date {
+    .card-date {{
       font-size: 12px;
       color: var(--text-faint);
-    }
+    }}
 
-    .card-title {
+    .card-title {{
       font-size: 18px;
       font-weight: 700;
       color: var(--text-main);
@@ -433,49 +464,49 @@
       margin-bottom: 10px;
       letter-spacing: -0.01em;
       transition: color 0.15s;
-    }
+    }}
 
-    .report-card:hover .card-title {
+    .report-card:hover .card-title {{
       color: var(--primary);
-    }
+    }}
 
-    .card-desc {
+    .card-desc {{
       font-size: 13.5px;
       color: var(--text-muted);
       line-height: 1.6;
       margin-bottom: 20px;
       flex-grow: 1;
-    }
+    }}
 
-    .card-footer {
+    .card-footer {{
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding-top: 14px;
       border-top: 1px solid var(--border);
       font-size: 12.5px;
-    }
+    }}
 
-    .card-author {
+    .card-author {{
       color: var(--text-muted);
       font-weight: 500;
-    }
+    }}
 
-    .card-action {
+    .card-action {{
       color: var(--primary);
       font-weight: 600;
       display: flex;
       align-items: center;
       gap: 4px;
       transition: gap 0.2s;
-    }
+    }}
 
-    .report-card:hover .card-action {
+    .report-card:hover .card-action {{
       gap: 7px;
-    }
+    }}
 
     /* Global Cmd+K Search Modal */
-    .search-modal-backdrop {
+    .search-modal-backdrop {{
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.65);
@@ -486,13 +517,13 @@
       justify-content: center;
       padding-top: 12vh;
       animation: fadeIn 0.15s ease-out;
-    }
+    }}
 
-    .search-modal-backdrop.open {
+    .search-modal-backdrop.open {{
       display: flex;
-    }
+    }}
 
-    .search-modal {
+    .search-modal {{
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
@@ -503,17 +534,17 @@
       display: flex;
       flex-direction: column;
       max-height: 70vh;
-    }
+    }}
 
-    .modal-header {
+    .modal-header {{
       display: flex;
       align-items: center;
       padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       gap: 12px;
-    }
+    }}
 
-    .modal-input {
+    .modal-input {{
       flex: 1;
       font-size: 16px;
       border: none;
@@ -521,9 +552,9 @@
       background: transparent;
       color: var(--text-main);
       font-family: inherit;
-    }
+    }}
 
-    .modal-close-btn {
+    .modal-close-btn {{
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       color: var(--text-muted);
@@ -532,48 +563,48 @@
       font-size: 11px;
       font-family: var(--font-mono);
       cursor: pointer;
-    }
+    }}
 
-    .modal-results {
+    .modal-results {{
       overflow-y: auto;
       padding: 8px 12px;
       flex: 1;
-    }
+    }}
 
-    .modal-result-item {
+    .modal-result-item {{
       display: block;
       text-decoration: none;
       padding: 12px 14px;
       border-radius: var(--radius-md);
       color: inherit;
       transition: background 0.15s;
-    }
+    }}
 
-    .modal-result-item:hover, .modal-result-item.selected {
+    .modal-result-item:hover, .modal-result-item.selected {{
       background: var(--primary-subtle);
-    }
+    }}
 
-    .modal-result-title {
+    .modal-result-title {{
       font-size: 15px;
       font-weight: 600;
       color: var(--text-main);
       margin-bottom: 4px;
-    }
+    }}
 
-    .modal-result-snippet {
+    .modal-result-snippet {{
       font-size: 13px;
       color: var(--text-muted);
       line-height: 1.5;
-    }
+    }}
 
-    .modal-result-snippet mark {
+    .modal-result-snippet mark {{
       background: rgba(254, 240, 138, 0.6);
       color: inherit;
       padding: 1px 2px;
       border-radius: 2px;
-    }
+    }}
 
-    .modal-footer {
+    .modal-footer {{
       padding: 10px 18px;
       border-top: 1px solid var(--border);
       background: var(--bg-subtle);
@@ -581,10 +612,10 @@
       color: var(--text-faint);
       display: flex;
       justify-content: space-between;
-    }
+    }}
 
     /* Footer */
-    footer {
+    footer {{
       border-top: 1px solid var(--border);
       background: var(--bg-surface);
       padding: 36px 24px;
@@ -592,19 +623,19 @@
       color: var(--text-muted);
       font-size: 13.5px;
       margin-top: auto;
-    }
+    }}
 
-    @media (max-width: 768px) {
-      .hero-title { font-size: 30px; }
-      .hero-desc { font-size: 15px; }
-      .report-grid { grid-template-columns: 1fr; }
-      .nav-container { padding: 12px 16px; }
-    }
+    @media (max-width: 768px) {{
+      .hero-title {{ font-size: 30px; }}
+      .hero-desc {{ font-size: 15px; }}
+      .report-grid {{ grid-template-columns: 1fr; }}
+      .nav-container {{ padding: 12px 16px; }}
+    }}
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    @keyframes fadeIn {{
+      from {{ opacity: 0; }}
+      to {{ opacity: 1; }}
+    }}
   </style>
 </head>
 <body>
@@ -662,149 +693,7 @@
   <!-- Reports Grid -->
   <main class="grid-container">
     <div class="report-grid" id="reportGrid">
-        <a href="reports/fde-analysis.html" class="report-card" data-category="AI与科技" data-tag="AI与科技">
-          <div class="card-meta">
-            <span class="card-tag">🤖 AI与科技</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 16 min</span>
-              <span class="card-date">2026-09-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">FDE（前线部署工程师）横纵分析报告：从国防军工特种兵到 AI 商业化「最后一公里」的破局者</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS FDE（前线部署工程师）横纵分析报告：从国防军工特种兵到 AI 商业化「最后一公里」的破局者 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 研究时间：2026年9月 | 所属领域：前...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/welcome.html" class="report-card" data-category="方法论" data-tag="方法论">
-          <div class="card-meta">
-            <span class="card-tag">🧭 方法论</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 6 min</span>
-              <span class="card-date">2026-09-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">横纵分析法 (HV-Analysis) 方法论与研究范式</h3>
-          <p class="card-desc">📊 方法论 HORIZONTAL & VERTICAL MATRIX 横纵分析法 (HV-Analysis) 方法论与研究范式 ✍️ 主理人：WeiHaoran 📅 归档期次：2026-09 🌐 范式：横纵分析法 (HV-Analysis) 编写时间：2026...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/中国四大酒店集团国内布局与发展策略横纵分析报告.html" class="report-card" data-category="商业与消费" data-tag="商业与消费">
-          <div class="card-meta">
-            <span class="card-tag">🏨 商业与消费</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 15 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">中国四大酒店集团国内布局与发展策略横纵分析报告</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 中国四大酒店集团国内布局与发展策略横纵分析报告 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 研究时间：2026年8月 | 所属行业：中国酒店及住宿业 | 重点研究对象：华住集团、锦...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/华纳兄弟_横纵分析报告.html" class="report-card" data-category="商业与消费" data-tag="商业与消费">
-          <div class="card-meta">
-            <span class="card-tag">🎬 商业与消费</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 16 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">华纳兄弟：百年造梦巨轮的资本狂想与债务重锁</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 华纳兄弟：百年造梦巨轮的资本狂想与债务重锁 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 一、一句话定义 华纳兄弟探索（Warner Bros. Discovery, Inc.，以下...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/天津_横纵分析报告.html" class="report-card" data-category="产业与制造" data-tag="产业与制造">
-          <div class="card-meta">
-            <span class="card-tag">🏙️ 产业与制造</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 20 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">天津城市发展轨迹与竞争图谱深度研究报告</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 天津城市发展轨迹与竞争图谱深度研究报告 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 研究时间：2026年7月 | 所属领域：城市经济 / 区域与产业发展 | 研究对象类型：城市 /...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/烟台东方威思顿电气有限公司_横纵分析报告.html" class="report-card" data-category="产业与制造" data-tag="产业与制造">
-          <div class="card-meta">
-            <span class="card-tag">⚡ 产业与制造</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 12 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">烟台东方威思顿电气有限公司横纵分析报告</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 烟台东方威思顿电气有限公司横纵分析报告 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 研究时间：2026年6月 | 所属领域：智能电网与智能计量 | 研究对象类型：企业分析 摘要与一...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/美国主要动画片厂_横纵分析报告.html" class="report-card" data-category="商业与消费" data-tag="商业与消费">
-          <div class="card-meta">
-            <span class="card-tag">🎨 商业与消费</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 12 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">银幕背后的造梦帝国</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 银幕背后的造梦帝国 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 研究时间：2026年7月 | 所属领域：文化创意与影视动画 | 研究对象类型：行业片厂横纵对比 一、一句话定义 自2...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/美联储加息与降息_横纵分析报告.html" class="report-card" data-category="宏观与金融" data-tag="宏观与金融">
-          <div class="card-meta">
-            <span class="card-tag">📈 宏观与金融</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 14 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">美联储加息与降息：历时演进、共时格局与横纵交汇深度研究</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 美联储加息与降息：历时演进、共时格局与横纵交汇深度研究 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 研究时间：2026年7月 | 所属领域：宏观经济与央行货币政策 | 研究视角：横...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
-
-        <a href="reports/美股三大指数与衍生生态_横纵分析报告.html" class="report-card" data-category="宏观与金融" data-tag="宏观与金融">
-          <div class="card-meta">
-            <span class="card-tag">📊 宏观与金融</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ 18 min</span>
-              <span class="card-date">2026-08</span>
-            </div>
-          </div>
-          <h3 class="card-title">美股三大指数与衍生生态横纵分析</h3>
-          <p class="card-desc">横纵深度研报 HV ANALYSIS 美股三大指数与衍生生态横纵分析 ✍️ 作者：WeiHaoran 📅 归档：2026-09 🌐 形式：横纵双轴全景研报 一、一句话定义 美股三大指数（道琼斯工业平均指数、标普500指数、纳斯达克100/综合指数）及其衍生生态...</p>
-          <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
-          </div>
-        </a>
+{cards_html}
     </div>
   </main>
 
@@ -843,45 +732,45 @@
     const themeToggle = document.getElementById('themeToggle');
     const htmlEl = document.documentElement;
 
-    function initTheme() {
+    function initTheme() {{
       const savedTheme = localStorage.getItem('hv_theme') || 
         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       htmlEl.setAttribute('data-theme', savedTheme);
       updateThemeIcon(savedTheme);
-    }
+    }}
 
-    function updateThemeIcon(theme) {
+    function updateThemeIcon(theme) {{
       themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-    }
+    }}
 
-    themeToggle.addEventListener('click', () => {
+    themeToggle.addEventListener('click', () => {{
       const currentTheme = htmlEl.getAttribute('data-theme');
       const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
       htmlEl.setAttribute('data-theme', nextTheme);
       localStorage.setItem('hv_theme', nextTheme);
       updateThemeIcon(nextTheme);
-    });
+    }});
     initTheme();
 
     // Instant Category Filter
     const filterBtns = document.querySelectorAll('.filter-btn');
     const reportCards = document.querySelectorAll('.report-card');
 
-    filterBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
+    filterBtns.forEach(btn => {{
+      btn.addEventListener('click', () => {{
         filterBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const filter = btn.dataset.filter;
 
-        reportCards.forEach(card => {
-          if (filter === 'all' || card.dataset.category === filter || card.dataset.tag === filter) {
+        reportCards.forEach(card => {{
+          if (filter === 'all' || card.dataset.category === filter || card.dataset.tag === filter) {{
             card.style.display = 'flex';
-          } else {
+          }} else {{
             card.style.display = 'none';
-          }
-        });
-      });
-    });
+          }}
+        }});
+      }});
+    }});
 
     // Full-text Cmd+K Search Engine
     let searchData = [];
@@ -889,18 +778,18 @@
 
     fetch('search-index.json')
       .then(res => res.json())
-      .then(data => {
+      .then(data => {{
         searchData = data;
-        fuse = new Fuse(searchData, {
+        fuse = new Fuse(searchData, {{
           keys: [
-            { name: 'title', weight: 0.6 },
-            { name: 'tag', weight: 0.2 },
-            { name: 'summary', weight: 0.2 }
+            {{ name: 'title', weight: 0.6 }},
+            {{ name: 'tag', weight: 0.2 }},
+            {{ name: 'summary', weight: 0.2 }}
           ],
           threshold: 0.35,
           includeMatches: true
-        });
-      })
+        }});
+      }})
       .catch(err => console.error('Failed to load search index:', err));
 
     const searchModal = document.getElementById('searchModal');
@@ -909,59 +798,65 @@
     const modalResults = document.getElementById('modalResults');
     const modalCloseBtn = document.getElementById('modalCloseBtn');
 
-    function openModal() {
+    function openModal() {{
       searchModal.classList.add('open');
       modalInput.focus();
       modalInput.select();
-    }
+    }}
 
-    function closeModal() {
+    function closeModal() {{
       searchModal.classList.remove('open');
       modalInput.value = '';
       modalResults.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">键入关键词进行全文深度匹配...</div>';
-    }
+    }}
 
     quickTrigger.addEventListener('click', openModal);
     modalCloseBtn.addEventListener('click', closeModal);
-    searchModal.addEventListener('click', (e) => {
+    searchModal.addEventListener('click', (e) => {{
       if (e.target === searchModal) closeModal();
-    });
+    }});
 
     // Keyboard Shortcuts (Cmd+K / Ctrl+K / ESC)
-    window.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    window.addEventListener('keydown', (e) => {{
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {{
         e.preventDefault();
         openModal();
-      } else if (e.key === 'Escape' && searchModal.classList.contains('open')) {
+      }} else if (e.key === 'Escape' && searchModal.classList.contains('open')) {{
         closeModal();
-      }
-    });
+      }}
+    }});
 
     // Search Query Execution
-    modalInput.addEventListener('input', (e) => {
+    modalInput.addEventListener('input', (e) => {{
       const query = e.target.value.trim();
-      if (!query || !fuse) {
+      if (!query || !fuse) {{
         modalResults.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">键入关键词进行全文深度匹配...</div>';
         return;
-      }
+      }}
 
       const results = fuse.search(query).slice(0, 7);
-      if (results.length === 0) {
+      if (results.length === 0) {{
         modalResults.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">未找到匹配研报，换个关键词试试</div>';
         return;
-      }
+      }}
 
-      modalResults.innerHTML = results.map(res => {
+      modalResults.innerHTML = results.map(res => {{
         const item = res.item;
         return `
-          <a href="${item.url}" class="modal-result-item">
-            <div style="font-size: 11px; font-weight: 600; color: var(--primary); margin-bottom: 2px;">${item.icon} ${item.tag} · ${item.date}</div>
-            <div class="modal-result-title">${item.title}</div>
-            <div class="modal-result-snippet">${item.summary}</div>
+          <a href="${{item.url}}" class="modal-result-item">
+            <div style="font-size: 11px; font-weight: 600; color: var(--primary); margin-bottom: 2px;">${{item.icon}} ${{item.tag}} · ${{item.date}}</div>
+            <div class="modal-result-title">${{item.title}}</div>
+            <div class="modal-result-snippet">${{item.summary}}</div>
           </a>
         `;
-      }).join('');
-    });
+      }}).join('');
+    }});
   </script>
 </body>
 </html>
+'''
+
+with open(INDEX_HTML_PATH, 'w', encoding='utf-8') as f:
+    f.write(full_html)
+
+print("Generated modern interactive index.html successfully!")
