@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HV Analysis Reports | 深度研究报告库</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 40px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      background: #eff6ff;
+      color: var(--primary-light);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+    .report-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .report-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
+      display: block;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .report-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      border-color: var(--primary-light);
+    }
+    .card-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      color: #475569;
+      font-size: 0.95rem;
+    }
+    footer {
+      margin-top: 60px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">HV-ANALYSIS · 知识库</div>
+      <h1>深度研究报告专栏</h1>
+      <p class="subtitle">采用横纵分析法沉淀的行业、产品与前沿技术全景研报</p>
+    </header>
+
+    <main class="report-list">
+      <div class="report-card" style="cursor: default;">
+        <div class="card-meta">
+          <span>📅 2026-09-08</span>
+          <span>✍️ WeiHaoran</span>
+          <span>🏷️ 系统初始化</span>
+        </div>
+        <div class="card-title">Cloudflare Pages 静态报告站点已初始化</div>
+        <div class="card-desc">
+          基于 hv-analysis 生成的 HTML/PDF 研报将自动归档并同步展示在此处。
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2026 WeiHaoran · Powered by Cloudflare Pages & hv-analysis</p>
+    </footer>
+  </div>
+</body>
+</html>
