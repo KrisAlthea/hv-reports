@@ -1,67 +1,73 @@
-import json, os, glob, re
+import os, json, glob, re
 from bs4 import BeautifulSoup
 
 REPORTS_DIR = '/root/projects/hv-reports/reports'
-OUTPUT_INDEX = '/root/projects/hv-reports/index.html'
-SEARCH_INDEX = '/root/projects/hv-reports/search-index.json'
+OUTPUT_INDEX = '/root/projects/hv-reports/search-index.json'
 
 CATEGORY_MAP = {
-    '美联储加息与降息_横纵分析报告.html': {'cat': '宏观与金融', 'tag': '宏观与金融', 'icon': '📈', 'date': '2026-08', 'min': '14'},
-    '美股三大指数与衍生生态_横纵分析报告.html': {'cat': '宏观与金融', 'tag': '宏观与金融', 'icon': '📊', 'date': '2026-08', 'min': '18'},
-    'fde-analysis.html': {'cat': 'AI与科技', 'tag': 'AI与科技', 'icon': '🤖', 'date': '2026-09-08', 'min': '16'},
-    'welcome.html': {'cat': '方法论', 'tag': '方法论', 'icon': '🧭', 'date': '2026-09-08', 'min': '6'},
-    '中国四大酒店集团国内布局与发展策略横纵分析报告.html': {'cat': '商业与消费', 'tag': '商业与消费', 'icon': '🏨', 'date': '2026-08', 'min': '15'},
-    '华纳兄弟_横纵分析报告.html': {'cat': '商业与消费', 'tag': '商业与消费', 'icon': '🎬', 'date': '2026-08', 'min': '16'},
-    '美国主要动画片厂_横纵分析报告.html': {'cat': '商业与消费', 'tag': '商业与消费', 'icon': '🎨', 'date': '2026-08', 'min': '12'},
-    '天津_横纵分析报告.html': {'cat': '产业与制造', 'tag': '产业与制造', 'icon': '🏙️', 'date': '2026-08', 'min': '20'},
-    '烟台东方威思顿电气有限公司_横纵分析报告.html': {'cat': '产业与制造', 'tag': '产业与制造', 'icon': '⚡', 'date': '2026-08', 'min': '12'}
+    '美联储': ('宏观与金融', '🏛️ 宏观货币'),
+    '美股三大指数': ('宏观与金融', '📈 资本市场'),
+    '中国四大酒店': ('商业与消费', '🏨 酒店文旅'),
+    '华纳兄弟': ('商业与消费', '🎬 传媒娱乐'),
+    '美国主要动画': ('商业与消费', '🎨 文化产业'),
+    '天津': ('产业与制造', '🏙️ 区域经济'),
+    '烟台东方威思顿': ('产业与制造', '⚡ 电力设备'),
+    'fde': ('AI与科技', '🤖 AI工程化'),
+    'welcome': ('方法论', '📖 核心范式')
 }
 
-files = sorted(glob.glob(os.path.join(REPORTS_DIR, '*.html')))
-reports_data = []
-
-for fpath in files:
-    fname = os.path.basename(fpath)
-    with open(fpath, 'r', encoding='utf-8') as f:
+reports = []
+for p in sorted(glob.glob(f'{REPORTS_DIR}/*.html')):
+    fname = os.path.basename(p)
+    with open(p, 'r', encoding='utf-8') as f:
         soup = BeautifulSoup(f.read(), 'html.parser')
-        
+    
     title_el = soup.find('h1') or soup.find('title')
-    title = title_el.get_text().strip() if title_el else fname
-    title = re.sub(r'[\r\n\t]+', ' ', title).strip()
+    raw_title = title_el.get_text().strip() if title_el else fname.replace('.html', '')
+    title = re.sub(r'\s*\|\s*HV Analysis.*$', '', raw_title).strip()
     
-    meta_cfg = CATEGORY_MAP.get(fname, {
-        'cat': '深度研报', 'tag': '深度研报', 'icon': '📄', 'date': '2026-09', 'min': '10'
-    })
-    
-    # Text snippet for search
-    body_el = soup.find('article') or soup.find(class_='report-body') or soup.find('main') or soup.body
-    body_text = body_el.get_text() if body_el else ''
-    body_clean = ' '.join(body_text.split())
-    
-    # Extract h2 sections
-    sections = []
-    for h in soup.find_all(['h2', 'h3']):
-        htxt = h.get_text().strip()
-        hid = h.get('id', '')
-        if htxt and len(htxt) < 35:
-            sections.append({'id': hid, 'title': htxt})
+    cat = '深度研报'
+    tag = '📊 产业研究'
+    for k, v in CATEGORY_MAP.items():
+        if k.lower() in fname.lower() or k.lower() in title.lower():
+            cat, tag = v
+            break
             
-    reports_data.append({
-        'file': fname,
-        'url': f'reports/{fname}',
+    p_tags = soup.find_all('p')
+    desc = ''
+    for pt in p_tags:
+        text = pt.get_text().strip()
+        if len(text) > 40 and not text.startswith('作者') and not text.startswith('时间'):
+            desc = text[:220]
+            break
+    if not desc and p_tags:
+        desc = p_tags[0].get_text().strip()[:200]
+        
+    date_match = re.search(r'202[4-6][-\.年]\d{1,2}', soup.get_text())
+    date_str = date_match.group(0).replace('年', '-').replace('.', '-') if date_match else '2026-08'
+    if len(date_str) == 6 and date_str[4] == '-':
+        date_str = f"{date_str[:5]}0{date_str[5]}"
+        
+    full_text = ' '.join(soup.get_text().split())
+    char_count = len(full_text)
+    read_time = max(3, round(char_count / 500))
+    
+    reports.append({
+        'slug': fname.replace('.html', ''),
+        'filename': fname,
         'title': title,
-        'cat': meta_cfg['cat'],
-        'tag': meta_cfg['tag'],
-        'icon': meta_cfg['icon'],
-        'date': meta_cfg['date'],
-        'min': meta_cfg['min'],
-        'words': len(body_clean),
-        'summary': body_clean[:320] + '...',
-        'sections': sections[:8]
+        'category': cat,
+        'tag': tag,
+        'desc': desc,
+        'date': date_str,
+        'char_count': char_count,
+        'read_time': f"{read_time} 分钟",
+        'summary': desc[:160] + '...'
     })
 
-# Save search index
-with open(SEARCH_INDEX, 'w', encoding='utf-8') as sf:
-    json.dump(reports_data, sf, ensure_ascii=False, indent=2)
+reports.sort(key=lambda x: (x['category'] != '方法论', x['date']), reverse=True)
 
-print(f"Generated search index with {len(reports_data)} reports.")
+with open(OUTPUT_INDEX, 'w', encoding='utf-8') as f:
+    json.dump(reports, f, ensure_ascii=False, indent=2)
+
+print(f"Generated search index with {len(reports)} reports.")

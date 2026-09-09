@@ -1,769 +1,1054 @@
-import json, os, glob, re
-from bs4 import BeautifulSoup
+import json, os, urllib.parse
 
-INDEX_HTML_PATH = '/root/projects/hv-reports/index.html'
-SEARCH_INDEX_PATH = '/root/projects/hv-reports/search-index.json'
+INDEX_FILE = '/root/projects/hv-reports/index.html'
+DATA_FILE = '/root/projects/hv-reports/search-index.json'
 
-with open(SEARCH_INDEX_PATH, 'r', encoding='utf-8') as f:
-    reports_data = json.load(f)
+with open(DATA_FILE, 'r', encoding='utf-8') as f:
+    reports = json.load(f)
 
-# Build Cards HTML
-cards_html_list = []
-for r in reports_data:
-    card = f'''        <a href="{r['url']}" class="report-card" data-category="{r['cat']}" data-tag="{r['tag']}">
-          <div class="card-meta">
-            <span class="card-tag">{r['icon']} {r['tag']}</span>
-            <div class="card-meta-right">
-              <span class="card-read-time">⏱️ {r['min']} min</span>
-              <span class="card-date">{r['date']}</span>
+total_reports = len(reports)
+total_words = sum(r.get('char_count', 0) for r in reports)
+total_words_k = f"{round(total_words / 1000, 1)}k"
+
+featured = next((r for r in reports if r['slug'] == 'welcome'), reports[0])
+featured_url = "reports/" + urllib.parse.quote(featured['filename'])
+
+standard_reports = [r for r in reports if r['slug'] != 'welcome']
+
+def render_cards(items):
+    html = []
+    for r in items:
+        url = "reports/" + urllib.parse.quote(r['filename'])
+        html.append(f"""
+        <article class="report-card" data-category="{r['category']}" data-slug="{r['slug']}">
+          <div class="card-header">
+            <span class="card-tag">{r['tag']}</span>
+            <div class="card-time-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>{r['read_time']}</span>
             </div>
           </div>
-          <h3 class="card-title">{r['title']}</h3>
-          <p class="card-desc">{r['summary'][:130]}...</p>
+          <h3 class="card-title">
+            <a href="{url}">{r['title']}</a>
+          </h3>
+          <p class="card-desc">{r['desc']}</p>
           <div class="card-footer">
-            <span class="card-author">✍️ WeiHaoran</span>
-            <span class="card-action">查阅研报 →</span>
+            <div class="author-meta">
+              <span class="avatar-dot"></span>
+              <span class="author-name">WeiHaoran</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-date">{r['date']}</span>
+            </div>
+            <a href="{url}" class="card-action" aria-label="查阅研报">
+              <span>阅读</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </a>
           </div>
-        </a>'''
-    cards_html_list.append(card)
+        </article>
+""")
+    return "\n".join(html)
 
-cards_html = '\n\n'.join(cards_html_list)
+cards_html = render_cards(standard_reports)
 
-full_html = f'''<!DOCTYPE html>
+html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HV Analysis | 横纵分析法深度研究智库</title>
-  <meta name="description" content="基于历时-共时方法论与商业战略模型的深度产业与科技智库。">
+  <meta name="description" content="横向对比标杆生态，纵向穿透产业链路。基于横纵分析法(Horizontal-Vertical Analysis)的工业级与商业深度研究报告门户。">
+  <meta name="author" content="WeiHaoran">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.basic.min.js"></script>
+
   <style>
     :root {{
-      --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-
-      /* Light Theme (Mintlify/Stripe Warm Editorial) */
-      --bg-base: #f8fafc;
+      --bg-page: #f8fafc;
       --bg-surface: #ffffff;
       --bg-surface-elevated: #ffffff;
       --bg-subtle: #f1f5f9;
-      --border: #e2e8f0;
-      --border-focus: #3b82f6;
+      --bg-muted: #e2e8f0;
+      
       --text-main: #0f172a;
       --text-muted: #475569;
-      --text-faint: #94a3b8;
+      --text-light: #94a3b8;
       
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --primary-subtle: rgba(37, 99, 235, 0.08);
+      --primary-light: rgba(37, 99, 235, 0.08);
+      --primary-glow: rgba(37, 99, 235, 0.18);
       
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
-      --shadow-hover: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
-      --shadow-modal: 0 20px 25px -5px rgba(0,0,0,0.2), 0 8px 10px -6px rgba(0,0,0,0.1);
+      --border: #e2e8f0;
+      --border-subtle: #cbd5e1;
+      
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+      --shadow-lg: 0 12px 28px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+      --shadow-xl: 0 24px 48px -12px rgba(15, 23, 42, 0.12);
 
-      --radius-sm: 6px;
+      --radius-sm: 8px;
       --radius-md: 12px;
       --radius-lg: 16px;
       --radius-full: 9999px;
-      --header-blur: blur(12px);
+      
+      --font-sans: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
     }}
 
     [data-theme="dark"] {{
-      --bg-base: #090d16;
+      --bg-page: #080c14;
       --bg-surface: #0f172a;
-      --bg-surface-elevated: #1e293b;
-      --bg-subtle: #172033;
-      --border: #1e293b;
-      --border-focus: #60a5fa;
+      --bg-surface-elevated: #151f34;
+      --bg-subtle: #1e293b;
+      --bg-muted: #334155;
+      
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
-      --text-faint: #64748b;
+      --text-light: #64748b;
       
-      --primary: #3b82f6;
+      --primary: #38bdf8;
       --primary-hover: #60a5fa;
-      --primary-subtle: rgba(59, 130, 246, 0.15);
+      --primary-light: rgba(56, 189, 248, 0.12);
+      --primary-glow: rgba(56, 189, 248, 0.25);
       
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4);
-      --shadow-hover: 0 12px 24px -4px rgba(0,0,0,0.5);
-      --shadow-modal: 0 25px 50px -12px rgba(0,0,0,0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-subtle: rgba(255, 255, 255, 0.14);
+      
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+      --shadow-xl: 0 24px 50px rgba(0, 0, 0, 0.8);
     }}
 
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    * {{
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }}
 
     body {{
       font-family: var(--font-sans);
-      background-color: var(--bg-base);
+      background-color: var(--bg-page);
       color: var(--text-main);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      transition: background-color 0.25s ease, color 0.25s ease;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      overflow-x: hidden;
+    }}
+
+    /* Top Progress Bar */
+    #topProgressBar {{
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2563eb, #06b6d4, #10b981);
+      width: 0%;
+      z-index: 9999;
+      transition: width 0.1s ease-out;
     }}
 
     /* Global Header */
     .site-header {{
       position: sticky;
       top: 0;
-      z-index: 50;
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: var(--header-blur);
-      -webkit-backdrop-filter: var(--header-blur);
+      z-index: 1000;
+      background: var(--bg-surface);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      transition: background 0.25s ease, border-color 0.25s ease;
     }}
-
     [data-theme="dark"] .site-header {{
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.8);
     }}
 
-    .nav-container {{
-      max-width: 1280px;
+    .header-container {{
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 14px 24px;
+      padding: 0.85rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }}
 
-    .brand {{
+    .site-brand {{
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 0.75rem;
       text-decoration: none;
       color: inherit;
     }}
 
-    .brand-logo {{
-      width: 34px;
-      height: 34px;
-      background: linear-gradient(135deg, #1e3a8a, var(--primary));
-      color: white;
-      border-radius: 8px;
+    .brand-symbol {{
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
+      color: white;
       font-weight: 800;
-      font-size: 14px;
+      font-size: 16px;
       letter-spacing: -0.5px;
-      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+    }}
+    [data-theme="dark"] .brand-symbol {{
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #080c14;
+    }}
+
+    .brand-text {{
+      display: flex;
+      flex-direction: column;
     }}
 
     .brand-title {{
       font-size: 17px;
       font-weight: 700;
-      color: var(--text-main);
       letter-spacing: -0.02em;
+      color: var(--text-main);
     }}
 
-    .brand-tag {{
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--primary);
-      background: var(--primary-subtle);
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      margin-left: 6px;
+    .brand-sub {{
+      font-size: 11px;
+      color: var(--text-light);
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }}
 
-    .nav-actions {{
+    .header-actions {{
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 0.75rem;
     }}
 
-    .nav-link {{
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 13.5px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      transition: color 0.15s;
-    }}
-
-    .nav-link:hover {{
-      color: var(--primary);
-    }}
-
-    .btn-theme-toggle {{
-      display: inline-flex;
+    .search-trigger {{
+      display: flex;
       align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-full);
+      gap: 0.6rem;
+      background: var(--bg-subtle);
       border: 1px solid var(--border);
-      background: var(--bg-surface);
+      border-radius: var(--radius-md);
+      padding: 0.45rem 0.85rem;
+      font-size: 13.5px;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 16px;
-      transition: all 0.2s;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }}
 
-    .btn-theme-toggle:hover {{
-      border-color: var(--border-focus);
+    .search-trigger:hover {{
+      border-color: var(--primary);
+      background: var(--bg-surface);
+      box-shadow: 0 0 0 3px var(--primary-light);
       color: var(--text-main);
     }}
 
-    .btn-github {{
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--text-main);
-      color: var(--bg-surface);
-      padding: 7px 15px;
-      border-radius: var(--radius-full);
-      font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s;
+    .kbd-shortcut {{
+      font-size: 11px;
+      font-family: var(--font-mono);
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--text-light);
+    }}
+    [data-theme="dark"] .kbd-shortcut {{
+      background: var(--bg-subtle);
     }}
 
-    .btn-github:hover {{
-      opacity: 0.9;
-      transform: translateY(-1px);
+    .btn-icon {{
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }}
+    .btn-icon:hover {{
+      border-color: var(--primary);
+      background: var(--bg-subtle);
+      color: var(--primary);
+    }}
+
+    /* Main Container */
+    .page-container {{
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 5rem;
     }}
 
     /* Hero Section */
     .hero {{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 56px 24px 32px;
       text-align: center;
+      padding: 2.5rem 1rem 3.5rem;
+      max-width: 860px;
+      margin: 0 auto;
+      position: relative;
     }}
 
     .hero-badge {{
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      background: var(--primary-light);
+      border: 1px solid rgba(37, 99, 235, 0.2);
       border-radius: var(--radius-full);
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 20px;
-      box-shadow: var(--shadow-sm);
-    }}
-
-    .hero-badge span {{
+      font-size: 12.5px;
+      font-weight: 600;
       color: var(--primary);
-      font-weight: 700;
+      margin-bottom: 1.5rem;
     }}
 
     .hero-title {{
-      font-size: 42px;
+      font-size: 2.85rem;
       font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
       color: var(--text-main);
-      letter-spacing: -0.03em;
-      line-height: 1.25;
-      margin-bottom: 16px;
     }}
 
-    .gradient-text {{
-      background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
+    .hero-title .gradient-text {{
+      background: linear-gradient(135deg, #1d4ed8 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }}
+    [data-theme="dark"] .hero-title .gradient-text {{
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }}
 
     .hero-desc {{
-      font-size: 17px;
+      font-size: 1.15rem;
       color: var(--text-muted);
-      max-width: 680px;
-      margin: 0 auto 32px;
+      line-height: 1.7;
+      margin-bottom: 2.25rem;
+      font-weight: 400;
+    }}
+
+    /* Stats Grid */
+    .stats-bar {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 1.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }}
+
+    .stat-item {{
+      text-align: center;
+    }}
+
+    .stat-val {{
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      letter-spacing: -0.02em;
+    }}
+
+    .stat-label {{
+      font-size: 12.5px;
+      color: var(--text-light);
+      font-weight: 500;
+      margin-top: 0.15rem;
+    }}
+
+    /* Featured Banner Card (Hero Spotlight) */
+    .featured-banner {{
+      margin: 2.5rem 0 3.5rem;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(6, 182, 212, 0.05));
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2rem;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }}
+    .featured-banner:hover {{
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }}
+    [data-theme="dark"] .featured-banner {{
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(99, 102, 241, 0.05));
+      border-color: rgba(56, 189, 248, 0.25);
+    }}
+
+    .featured-content {{
+      max-width: 800px;
+    }}
+
+    .featured-label {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--primary);
+      color: white;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 0.2rem 0.65rem;
+      border-radius: var(--radius-full);
+      margin-bottom: 0.85rem;
+      letter-spacing: 0.02em;
+    }}
+    [data-theme="dark"] .featured-label {{
+      background: #0284c7;
+    }}
+
+    .featured-title {{
+      font-size: 1.55rem;
+      font-weight: 800;
+      margin-bottom: 0.65rem;
+      color: var(--text-main);
+      line-height: 1.3;
+    }}
+
+    .featured-title a {{
+      color: inherit;
+      text-decoration: none;
+    }}
+    .featured-title a:hover {{
+      color: var(--primary);
+    }}
+
+    .featured-desc {{
+      color: var(--text-muted);
+      font-size: 0.98rem;
       line-height: 1.6;
     }}
 
-    /* Search & Filter Controls */
-    .controls-wrapper {{
-      max-width: 1280px;
-      margin: 0 auto 36px;
-      padding: 0 24px;
-    }}
-
-    .search-container {{
-      position: relative;
-      max-width: 580px;
-      margin: 0 auto 20px;
-    }}
-
-    .search-input-box {{
-      width: 100%;
-      padding: 13px 90px 13px 44px;
-      font-size: 14.5px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-full);
-      background: var(--bg-surface);
-      color: var(--text-main);
-      box-shadow: var(--shadow-sm);
-      outline: none;
-      transition: all 0.2s ease;
-      cursor: pointer;
-    }}
-
-    .search-input-box:focus {{
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px var(--primary-subtle);
-    }}
-
-    .search-icon {{
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-faint);
-      font-size: 16px;
-    }}
-
-    .kbd-shortcut {{
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: var(--bg-subtle);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 3px 7px;
-      font-size: 11px;
-      font-family: var(--font-mono);
-      color: var(--text-muted);
+    .btn-featured-read {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--text-main);
+      color: var(--bg-page);
+      padding: 0.75rem 1.4rem;
+      border-radius: var(--radius-md);
       font-weight: 600;
-    }}
-
-    .filter-bar {{
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-    }}
-
-    .filter-btn {{
-      padding: 6px 15px;
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: var(--radius-full);
-      border: 1px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      white-space: nowrap;
       transition: all 0.2s ease;
     }}
-
-    .filter-btn:hover {{
-      border-color: var(--border-focus);
-      color: var(--text-main);
-    }}
-
-    .filter-btn.active {{
+    .btn-featured-read:hover {{
       background: var(--primary);
       color: white;
-      border-color: var(--primary);
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }}
+
+    /* Filter & Controls Toolbar */
+    .controls-toolbar {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }}
+
+    .filter-tabs {{
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--bg-surface);
+      padding: 0.3rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+    }}
+
+    .filter-tab {{
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }}
+    .filter-tab:hover {{
+      color: var(--text-main);
+    }}
+    .filter-tab.active {{
+      background: var(--primary);
+      color: white;
       font-weight: 600;
-      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 2px 6px var(--primary-glow);
     }}
 
-    /* Reports Grid */
-    .grid-container {{
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 24px 80px;
-      flex: 1;
+    .view-toggles {{
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--bg-surface);
+      padding: 0.3rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
     }}
 
-    .report-grid {{
+    .view-btn {{
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-light);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }}
+    .view-btn:hover {{
+      color: var(--text-main);
+    }}
+    .view-btn.active {{
+      background: var(--bg-subtle);
+      color: var(--primary);
+      font-weight: 700;
+    }}
+
+    /* Report Grid & List View */
+    .reports-container {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-      gap: 24px;
+      gap: 1.5rem;
+    }}
+
+    .reports-container.list-mode {{
+      grid-template-columns: 1fr;
     }}
 
     .report-card {{
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 24px;
-      text-decoration: none;
-      color: inherit;
+      border-radius: var(--radius-lg);
+      padding: 1.65rem;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
-      overflow: hidden;
       box-shadow: var(--shadow-sm);
-    }}
-
-    .report-card::before {{
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary), #06b6d4);
-      opacity: 0;
-      transition: opacity 0.25s ease;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }}
 
     .report-card:hover {{
       transform: translateY(-3px);
-      box-shadow: var(--shadow-hover);
-      border-color: var(--border-focus);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--border-subtle);
     }}
 
-    .report-card:hover::before {{
-      opacity: 1;
-    }}
-
-    .card-meta {{
+    .card-header {{
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-    }}
-
-    .card-meta-right {{
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      margin-bottom: 0.9rem;
     }}
 
     .card-tag {{
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11.5px;
+      display: inline-block;
+      font-size: 12px;
       font-weight: 600;
       color: var(--primary);
-      background: var(--primary-subtle);
-      padding: 3px 9px;
+      background: var(--primary-light);
+      padding: 0.2rem 0.6rem;
       border-radius: var(--radius-full);
+      letter-spacing: 0.01em;
     }}
 
-    .card-read-time {{
+    .card-time-badge {{
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
       font-size: 11.5px;
-      color: var(--text-faint);
-    }}
-
-    .card-date {{
-      font-size: 12px;
-      color: var(--text-faint);
+      color: var(--text-light);
+      font-family: var(--font-mono);
     }}
 
     .card-title {{
-      font-size: 18px;
+      font-size: 1.22rem;
       font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 0.75rem;
       color: var(--text-main);
-      line-height: 1.45;
-      margin-bottom: 10px;
-      letter-spacing: -0.01em;
-      transition: color 0.15s;
+      letter-spacing: -0.015em;
     }}
 
-    .report-card:hover .card-title {{
+    .card-title a {{
+      color: inherit;
+      text-decoration: none;
+    }}
+    .card-title a:hover {{
       color: var(--primary);
     }}
 
     .card-desc {{
-      font-size: 13.5px;
       color: var(--text-muted);
+      font-size: 0.92rem;
       line-height: 1.6;
-      margin-bottom: 20px;
+      margin-bottom: 1.5rem;
       flex-grow: 1;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }}
+
+    .reports-container.list-mode .card-desc {{
+      -webkit-line-clamp: 2;
     }}
 
     .card-footer {{
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 14px;
+      padding-top: 1rem;
       border-top: 1px solid var(--border);
       font-size: 12.5px;
     }}
 
-    .card-author {{
+    .author-meta {{
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
       color: var(--text-muted);
-      font-weight: 500;
+    }}
+
+    .avatar-dot {{
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+    }}
+
+    .author-name {{
+      font-weight: 600;
+      color: var(--text-main);
+    }}
+
+    .meta-sep {{
+      color: var(--text-light);
+    }}
+
+    .meta-date {{
+      color: var(--text-light);
+      font-family: var(--font-mono);
+      font-size: 12px;
     }}
 
     .card-action {{
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
       color: var(--primary);
       font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: gap 0.2s;
+      text-decoration: none;
+      transition: gap 0.15s ease;
+    }}
+    .card-action:hover {{
+      gap: 0.55rem;
     }}
 
-    .report-card:hover .card-action {{
-      gap: 7px;
-    }}
-
-    /* Global Cmd+K Search Modal */
-    .search-modal-backdrop {{
+    /* Search Modal (Spotlight Cmd+K) */
+    .search-overlay {{
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(4px);
-      z-index: 100;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10000;
       display: none;
       align-items: flex-start;
       justify-content: center;
-      padding-top: 12vh;
-      animation: fadeIn 0.15s ease-out;
+      padding-top: 10vh;
+      opacity: 0;
+      transition: opacity 0.2s ease;
     }}
 
-    .search-modal-backdrop.open {{
+    .search-overlay.active {{
       display: flex;
+      opacity: 1;
     }}
 
-    .search-modal {{
+    .search-dialog {{
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 640px;
-      box-shadow: var(--shadow-modal);
+      box-shadow: var(--shadow-xl);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      max-height: 70vh;
+      max-height: 75vh;
+      animation: modalSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }}
 
-    .modal-header {{
+    @keyframes modalSlide {{
+      from {{ transform: translateY(-16px) scale(0.98); }}
+      to {{ transform: translateY(0) scale(1); }}
+    }}
+
+    .search-input-box {{
       display: flex;
       align-items: center;
-      padding: 16px 20px;
+      padding: 1.1rem 1.4rem;
       border-bottom: 1px solid var(--border);
-      gap: 12px;
+      gap: 0.85rem;
+    }}
+
+    .search-icon {{
+      color: var(--text-light);
     }}
 
     .modal-input {{
       flex: 1;
-      font-size: 16px;
       border: none;
       outline: none;
       background: transparent;
+      font-size: 16px;
       color: var(--text-main);
       font-family: inherit;
     }}
-
-    .modal-close-btn {{
-      background: var(--bg-subtle);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: var(--radius-sm);
-      padding: 3px 8px;
-      font-size: 11px;
-      font-family: var(--font-mono);
-      cursor: pointer;
+    .modal-input::placeholder {{
+      color: var(--text-light);
     }}
 
-    .modal-results {{
+    .search-results-list {{
+      padding: 0.6rem;
       overflow-y: auto;
-      padding: 8px 12px;
       flex: 1;
     }}
 
-    .modal-result-item {{
-      display: block;
-      text-decoration: none;
-      padding: 12px 14px;
+    .search-item {{
+      padding: 0.85rem 1rem;
       border-radius: var(--radius-md);
-      color: inherit;
-      transition: background 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
     }}
 
-    .modal-result-item:hover, .modal-result-item.selected {{
-      background: var(--primary-subtle);
+    .search-item:hover, .search-item.selected {{
+      background: var(--bg-subtle);
     }}
 
-    .modal-result-title {{
-      font-size: 15px;
-      font-weight: 600;
+    .search-item-header {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }}
+
+    .search-item-title {{
+      font-size: 14.5px;
+      font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 4px;
     }}
 
-    .modal-result-snippet {{
-      font-size: 13px;
+    .search-item-tag {{
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+    }}
+
+    .search-item-desc {{
+      font-size: 12.5px;
       color: var(--text-muted);
       line-height: 1.5;
     }}
 
-    .modal-result-snippet mark {{
-      background: rgba(254, 240, 138, 0.6);
-      color: inherit;
-      padding: 1px 2px;
-      border-radius: 2px;
-    }}
-
-    .modal-footer {{
-      padding: 10px 18px;
+    .search-footer {{
+      padding: 0.65rem 1.4rem;
       border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       background: var(--bg-subtle);
       font-size: 12px;
-      color: var(--text-faint);
-      display: flex;
-      justify-content: space-between;
+      color: var(--text-light);
     }}
 
-    /* Footer */
-    footer {{
+    /* Global Footer */
+    .site-footer {{
       border-top: 1px solid var(--border);
       background: var(--bg-surface);
-      padding: 36px 24px;
-      text-align: center;
-      color: var(--text-muted);
+      padding: 3.5rem 1.5rem 2.5rem;
+      margin-top: 5rem;
+    }}
+
+    .footer-inner {{
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }}
+
+    .footer-info p {{
       font-size: 13.5px;
-      margin-top: auto;
+      color: var(--text-muted);
+    }}
+
+    .footer-brand {{
+      font-weight: 700;
+      color: var(--text-main);
+    }}
+
+    .footer-links {{
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }}
+
+    .footer-link {{
+      font-size: 13.5px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }}
+    .footer-link:hover {{
+      color: var(--primary);
     }}
 
     @media (max-width: 768px) {{
-      .hero-title {{ font-size: 30px; }}
-      .hero-desc {{ font-size: 15px; }}
-      .report-grid {{ grid-template-columns: 1fr; }}
-      .nav-container {{ padding: 12px 16px; }}
-    }}
-
-    @keyframes fadeIn {{
-      from {{ opacity: 0; }}
-      to {{ opacity: 1; }}
+      .hero-title {{ font-size: 2.1rem; }}
+      .featured-banner {{ grid-template-columns: 1fr; }}
+      .reports-container {{ grid-template-columns: 1fr; }}
+      .stats-bar {{ grid-template-columns: 1fr; }}
+      .header-actions .kbd-shortcut {{ display: none; }}
     }}
   </style>
 </head>
 <body>
+
+  <!-- Top Scroll Progress -->
+  <div id="topProgressBar"></div>
+
   <!-- Header -->
   <header class="site-header">
-    <div class="nav-container">
-      <a href="/" class="brand">
-        <div class="brand-logo">HV</div>
-        <div>
+    <div class="header-container">
+      <a href="/" class="site-brand">
+        <div class="brand-symbol">HV</div>
+        <div class="brand-text">
           <span class="brand-title">HV Analysis</span>
-          <span class="brand-tag">RESEARCH</span>
+          <span class="brand-sub">Research Institute</span>
         </div>
       </a>
-      <div class="nav-actions">
-        <button id="themeToggle" class="btn-theme-toggle" title="切换深色/浅色模式">🌓</button>
-        <a href="reports/welcome.html" class="nav-link">关于方法论</a>
-        <a href="https://github.com/KrisAlthea/hv-reports" target="_blank" class="btn-github">
-          <span>GitHub</span>
-          <span>↗</span>
+
+      <div class="header-actions">
+        <button class="search-trigger" id="openSearchBtn" aria-label="搜索研报">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>快速检索研报...</span>
+          <span class="kbd-shortcut">⌘K</span>
+        </button>
+
+        <a href="reports/welcome.html" class="btn-icon" title="方法论与范式">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+        </a>
+
+        <button class="btn-icon" id="themeToggleBtn" aria-label="切换深色/浅色模式">
+          <svg id="themeIconSun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg id="themeIconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+
+        <a href="https://github.com/KrisAlthea/hv-reports" target="_blank" class="btn-icon" title="GitHub 仓库">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
         </a>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <div class="hero-badge">
-      <span>🚀 深度智库</span> 历时演进 · 共时格局 · 严谨研报
-    </div>
-    <h1 class="hero-title">
-      透视底层逻辑，绘制<span class="gradient-text">商业与技术全景</span>
-    </h1>
-    <p class="hero-desc">
-      融合历时-共时方法论与商学院战略模型，覆盖人工智能、金融宏观、消费文娱及高新技术的纵深研究。
-    </p>
-  </section>
-
-  <!-- Controls: Search & Category Filters -->
-  <div class="controls-wrapper">
-    <div class="search-container">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="quickSearchTrigger" class="search-input-box" placeholder="搜索研报主题、行业或全文段落..." readonly>
-      <span class="kbd-shortcut">⌘ K</span>
-    </div>
-    <div class="filter-bar" id="filterBar">
-      <button class="filter-btn active" data-filter="all">全部研报</button>
-      <button class="filter-btn" data-filter="AI与科技">AI与科技</button>
-      <button class="filter-btn" data-filter="宏观与金融">宏观与金融</button>
-      <button class="filter-btn" data-filter="商业与消费">商业与消费</button>
-      <button class="filter-btn" data-filter="产业与制造">产业与制造</button>
-      <button class="filter-btn" data-filter="方法论">方法论</button>
-    </div>
-  </div>
-
-  <!-- Reports Grid -->
-  <main class="grid-container">
-    <div class="report-grid" id="reportGrid">
-{cards_html}
-    </div>
-  </main>
-
-  <!-- Global Full-text Cmd+K Modal -->
-  <div class="search-modal-backdrop" id="searchModal">
-    <div class="search-modal">
-      <div class="modal-header">
-        <span style="font-size: 18px;">🔍</span>
-        <input type="text" id="modalSearchInput" class="modal-input" placeholder="输入关键词全文搜索研报..." autocomplete="off">
-        <button class="modal-close-btn" id="modalCloseBtn">ESC</button>
+  <!-- Page Content -->
+  <main class="page-container">
+    
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-badge">
+        <span>✨ 横纵分析法 · 工业级研究架构</span>
       </div>
-      <div class="modal-results" id="modalResults">
-        <div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">
-          键入关键词进行全文深度匹配...
+      <h1 class="hero-title">
+        透视底层机理，<br><span class="gradient-text">重构商业与产业全景</span>
+      </h1>
+      <p class="hero-desc">
+        横向对标头部阵营与竞品生态，纵向穿透价值链条与底层周期。面向宏观经济、前沿科技与核心实业的深度研报智库。
+      </p>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-val">{total_reports} 篇</div>
+          <div class="stat-label">深度研究报告</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">4 大</div>
+          <div class="stat-label">覆盖核心领域</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">{total_words_k}</div>
+          <div class="stat-label">分析字数规模</div>
         </div>
       </div>
-      <div class="modal-footer">
-        <span>按 <strong>↑</strong> <strong>↓</strong> 选择，<strong>ENTER</strong> 访问</span>
-        <span>HV Analysis Index</span>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- Footer -->
-  <footer>
-    <div>© 2026 HV Analysis Research. 保留所有权利。</div>
-    <div style="margin-top: 6px; font-size: 12.5px; color: var(--text-faint);">
-      架构：纯静态 Web HTML + 响应式双栏排版 · 部署于 Cloudflare Pages 全球边缘节点
+    <!-- Featured Spotlight: Methodological Anchor -->
+    <section class="featured-banner">
+      <div class="featured-content">
+        <span class="featured-label">🎯 核心方法论</span>
+        <h2 class="featured-title">
+          <a href="{featured_url}">{featured['title']}</a>
+        </h2>
+        <p class="featured-desc">
+          {featured['desc']}
+        </p>
+      </div>
+      <a href="{featured_url}" class="btn-featured-read">
+        <span>研读方法论</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
+    </section>
+
+    <!-- Controls Toolbar -->
+    <section class="controls-toolbar">
+      <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" data-filter="all">全部研报 ({len(standard_reports)})</button>
+        <button class="filter-tab" data-filter="宏观与金融">🏛️ 宏观与金融</button>
+        <button class="filter-tab" data-filter="AI与科技">🤖 AI与科技</button>
+        <button class="filter-tab" data-filter="商业与消费">🛍️ 商业与消费</button>
+        <button class="filter-tab" data-filter="产业与制造">⚡ 产业与制造</button>
+      </div>
+
+      <div class="view-toggles">
+        <button class="view-btn active" id="gridModeBtn" title="网格视图">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </button>
+        <button class="view-btn" id="listModeBtn" title="紧凑列表视图">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Reports Grid -->
+    <section class="reports-container" id="reportsContainer">
+{cards_html}
+    </section>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-info">
+        <p><span class="footer-brand">HV Analysis</span> · 横纵分析法深度研究智库</p>
+        <p style="font-size:12.5px; color:var(--text-light); margin-top:0.3rem;">全天候产业与商业周期研报体系 · 全球边缘分布式节点托管</p>
+      </div>
+      <div class="footer-links">
+        <a href="reports/welcome.html" class="footer-link">研究方法论</a>
+        <a href="https://github.com/KrisAlthea/hv-reports" target="_blank" class="footer-link">GitHub 仓库</a>
+        <a href="#" class="footer-link" onclick="window.scrollTo({{top:0,behavior:'smooth'}}); return false;">回到顶部 ↑</a>
+      </div>
     </div>
   </footer>
 
-  <!-- Interactive Logic Script -->
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+  <!-- Search Modal -->
+  <div class="search-overlay" id="searchOverlay">
+    <div class="search-dialog">
+      <div class="search-input-box">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" class="modal-input" id="modalSearchInput" placeholder="输入关键词、行业、企业或核心逻辑检索..." autocomplete="off">
+        <span class="kbd-shortcut" style="cursor:pointer;" id="closeSearchBtn">ESC</span>
+      </div>
+      <div class="search-results-list" id="searchResultsList">
+        <!-- populated dynamically via JS -->
+      </div>
+      <div class="search-footer">
+        <span><span>↑</span> <span>↓</span> 键选择，<span>↵</span> 键阅读</span>
+        <span id="searchStatusCount">共 {total_reports} 篇研报</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive JavaScript -->
   <script>
-    // Theme Management (Light / Dark)
-    const themeToggle = document.getElementById('themeToggle');
-    const htmlEl = document.documentElement;
-
-    function initTheme() {{
-      const savedTheme = localStorage.getItem('hv_theme') || 
-        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      htmlEl.setAttribute('data-theme', savedTheme);
-      updateThemeIcon(savedTheme);
-    }}
-
-    function updateThemeIcon(theme) {{
-      themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-    }}
-
-    themeToggle.addEventListener('click', () => {{
-      const currentTheme = htmlEl.getAttribute('data-theme');
-      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      htmlEl.setAttribute('data-theme', nextTheme);
-      localStorage.setItem('hv_theme', nextTheme);
-      updateThemeIcon(nextTheme);
+    // 1. Reading Progress Bar
+    window.addEventListener('scroll', () => {{
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
+      document.getElementById('topProgressBar').style.width = Math.min(100, Math.max(0, progress)) + '%';
     }});
-    initTheme();
 
-    // Instant Category Filter
-    const filterBtns = document.querySelectorAll('.filter-btn');
+    // 2. Dark/Light Theme Switcher
+    const htmlEl = document.documentElement;
+    const themeBtn = document.getElementById('themeToggleBtn');
+    const sunIcon = document.getElementById('themeIconSun');
+    const moonIcon = document.getElementById('themeIconMoon');
+
+    function applyTheme(theme) {{
+      htmlEl.setAttribute('data-theme', theme);
+      localStorage.setItem('hv_theme', theme);
+      if (theme === 'dark') {{
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      }} else {{
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }}
+    }}
+
+    const savedTheme = localStorage.getItem('hv_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+    themeBtn.addEventListener('click', () => {{
+      const current = htmlEl.getAttribute('data-theme');
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    }});
+
+    // 3. Filter Tabs
+    const filterTabs = document.querySelectorAll('.filter-tab');
     const reportCards = document.querySelectorAll('.report-card');
 
-    filterBtns.forEach(btn => {{
-      btn.addEventListener('click', () => {{
-        filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const filter = btn.dataset.filter;
+    filterTabs.forEach(tab => {{
+      tab.addEventListener('click', () => {{
+        filterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const filter = tab.getAttribute('data-filter');
 
         reportCards.forEach(card => {{
-          if (filter === 'all' || card.dataset.category === filter || card.dataset.tag === filter) {{
+          if (filter === 'all' || card.getAttribute('data-category') === filter) {{
             card.style.display = 'flex';
           }} else {{
             card.style.display = 'none';
@@ -772,91 +1057,138 @@ full_html = f'''<!DOCTYPE html>
       }});
     }});
 
-    // Full-text Cmd+K Search Engine
+    // 4. Grid vs List View
+    const gridBtn = document.getElementById('gridModeBtn');
+    const listBtn = document.getElementById('listModeBtn');
+    const reportsContainer = document.getElementById('reportsContainer');
+
+    gridBtn.addEventListener('click', () => {{
+      gridBtn.classList.add('active');
+      listBtn.classList.remove('active');
+      reportsContainer.classList.remove('list-mode');
+    }});
+
+    listBtn.addEventListener('click', () => {{
+      listBtn.classList.add('active');
+      gridBtn.classList.remove('active');
+      reportsContainer.classList.add('list-mode');
+    }});
+
+    // 5. Global Search Modal (Fuse.js)
     let searchData = [];
     let fuse = null;
+    let selectedIndex = -1;
+
+    const searchOverlay = document.getElementById('searchOverlay');
+    const modalInput = document.getElementById('modalSearchInput');
+    const resultsList = document.getElementById('searchResultsList');
+    const searchStatusCount = document.getElementById('searchStatusCount');
 
     fetch('search-index.json')
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {{
         searchData = data;
         fuse = new Fuse(searchData, {{
-          keys: [
-            {{ name: 'title', weight: 0.6 }},
-            {{ name: 'tag', weight: 0.2 }},
-            {{ name: 'summary', weight: 0.2 }}
-          ],
+          keys: ['title', 'desc', 'category', 'tag'],
           threshold: 0.35,
-          includeMatches: true
+          ignoreLocation: true
         }});
+        renderSearchResults(searchData);
       }})
-      .catch(err => console.error('Failed to load search index:', err));
+      .catch(e => console.error('Error loading search index:', e));
 
-    const searchModal = document.getElementById('searchModal');
-    const quickTrigger = document.getElementById('quickSearchTrigger');
-    const modalInput = document.getElementById('modalSearchInput');
-    const modalResults = document.getElementById('modalResults');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
-
-    function openModal() {{
-      searchModal.classList.add('open');
-      modalInput.focus();
-      modalInput.select();
-    }}
-
-    function closeModal() {{
-      searchModal.classList.remove('open');
+    function openSearch() {{
+      searchOverlay.classList.add('active');
       modalInput.value = '';
-      modalResults.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">键入关键词进行全文深度匹配...</div>';
+      selectedIndex = -1;
+      renderSearchResults(searchData);
+      setTimeout(() => modalInput.focus(), 50);
     }}
 
-    quickTrigger.addEventListener('click', openModal);
-    modalCloseBtn.addEventListener('click', closeModal);
-    searchModal.addEventListener('click', (e) => {{
-      if (e.target === searchModal) closeModal();
+    function closeSearch() {{
+      searchOverlay.classList.remove('active');
+    }}
+
+    document.getElementById('openSearchBtn').addEventListener('click', openSearch);
+    document.getElementById('closeSearchBtn').addEventListener('click', closeSearch);
+
+    searchOverlay.addEventListener('click', (e) => {{
+      if (e.target === searchOverlay) closeSearch();
     }});
 
-    // Keyboard Shortcuts (Cmd+K / Ctrl+K / ESC)
     window.addEventListener('keydown', (e) => {{
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {{
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {{
         e.preventDefault();
-        openModal();
-      }} else if (e.key === 'Escape' && searchModal.classList.contains('open')) {{
-        closeModal();
+        openSearch();
+      }}
+      if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {{
+        closeSearch();
+      }}
+      if (!searchOverlay.classList.contains('active')) return;
+
+      const items = resultsList.querySelectorAll('.search-item');
+      if (e.key === 'ArrowDown') {{
+        e.preventDefault();
+        selectedIndex = (selectedIndex + 1) % items.length;
+        updateSelected(items);
+      }} else if (e.key === 'ArrowUp') {{
+        e.preventDefault();
+        selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+        updateSelected(items);
+      }} else if (e.key === 'Enter') {{
+        e.preventDefault();
+        if (selectedIndex >= 0 && items[selectedIndex]) {{
+          items[selectedIndex].click();
+        }}
       }}
     }});
 
-    // Search Query Execution
-    modalInput.addEventListener('input', (e) => {{
-      const query = e.target.value.trim();
-      if (!query || !fuse) {{
-        modalResults.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">键入关键词进行全文深度匹配...</div>';
+    function updateSelected(items) {{
+      items.forEach((it, idx) => {{
+        if (idx === selectedIndex) {{
+          it.classList.add('selected');
+          it.scrollIntoView({{ block: 'nearest' }});
+        }} else {{
+          it.classList.remove('selected');
+        }}
+      }});
+    }}
+
+    modalInput.addEventListener('input', () => {{
+      const q = modalInput.value.trim();
+      selectedIndex = -1;
+      if (!q) {{
+        renderSearchResults(searchData);
         return;
       }}
-
-      const results = fuse.search(query).slice(0, 7);
-      if (results.length === 0) {{
-        modalResults.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-faint); font-size: 13.5px;">未找到匹配研报，换个关键词试试</div>';
-        return;
-      }}
-
-      modalResults.innerHTML = results.map(res => {{
-        const item = res.item;
-        return `
-          <a href="${{item.url}}" class="modal-result-item">
-            <div style="font-size: 11px; font-weight: 600; color: var(--primary); margin-bottom: 2px;">${{item.icon}} ${{item.tag}} · ${{item.date}}</div>
-            <div class="modal-result-title">${{item.title}}</div>
-            <div class="modal-result-snippet">${{item.summary}}</div>
-          </a>
-        `;
-      }}).join('');
+      if (!fuse) return;
+      const res = fuse.search(q).map(x => x.item);
+      renderSearchResults(res);
     }});
+
+    function renderSearchResults(items) {{
+      if (!items || items.length === 0) {{
+        resultsList.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--text-light); font-size:14px;">未检索到相关研报</div>';
+        searchStatusCount.textContent = '0 篇研报';
+        return;
+      }}
+      searchStatusCount.textContent = `找到 ${{items.length}} 篇研报`;
+      resultsList.innerHTML = items.map(it => `
+        <a href="reports/${{encodeURIComponent(it.filename)}}" class="search-item">
+          <div class="search-item-header">
+            <span class="search-item-title">${{it.title}}</span>
+            <span class="search-item-tag">${{it.tag}}</span>
+          </div>
+          <div class="search-item-desc">${{it.desc}}</div>
+        </a>
+      `).join('');
+    }}
   </script>
 </body>
 </html>
-'''
+"""
 
-with open(INDEX_HTML_PATH, 'w', encoding='utf-8') as f:
-    f.write(full_html)
+with open(INDEX_FILE, 'w', encoding='utf-8') as f:
+    f.write(html_content)
 
-print("Generated modern interactive index.html successfully!")
+print(f"Generated ultra-premium editorial index.html at {INDEX_FILE}!")
