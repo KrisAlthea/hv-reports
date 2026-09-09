@@ -527,8 +527,37 @@
 
 </style>
 
+  <link rel="stylesheet" href="../assets/css/theme.css?v=20260909">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.6.2/fuse.basic.min.js"></script>
 </head>
-<body>
+<body data-root="../">
+
+  <!-- Unified Site Header for Reports -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="../" class="site-brand">
+        <div class="site-brand-symbol">HV</div>
+        <div>
+          <span class="site-brand-text">HV Analysis</span>
+          <span class="site-brand-sub">研究智库</span>
+        </div>
+      </a>
+      <div class="site-nav-group">
+        <button class="search-trigger-btn cmd-search-trigger" title="搜索全站研报 (Cmd + K)">
+          <span>🔍 全站检索</span>
+          <kbd>⌘K</kbd>
+        </button>
+        <a href="../" class="nav-link">智库首页</a>
+        <a href="welcome.html" class="nav-link">方法论</a>
+        <a href="https://github.com/KrisAlthea/hv-reports" target="_blank" class="btn-github-link">
+          <span>GitHub</span>
+          <span>↗</span>
+        </a>
+        <button class="btn-icon-action theme-toggle-btn" aria-label="切换深浅色主题">🌓</button>
+      </div>
+    </div>
+  </header>
+
   <nav class="top-nav">
     <a href="/" class="back-link">
       <span>←</span> 返回研究智库首页
@@ -1212,6 +1241,24 @@ AI应用外溢赋能传统产业 ──&gt; 工业/医疗/金融利润爆发 ─
     }
   </script>
 
+
+  <!-- Floating Reading Utilities -->
+  <div class="reading-tools-fab" style="position:fixed; bottom:2rem; right:2rem; display:flex; flex-direction:column; gap:0.6rem; z-index:990;">
+    <button class="btn-icon-action" id="copyShareBtn" title="一键复制引用与链接" onclick="window.copyReportCitation()" style="box-shadow:var(--shadow-md);">📋</button>
+    <button class="btn-icon-action" id="scrollToTopBtn" title="回到顶部" onclick="window.scrollTo({top:0, behavior:'smooth'})" style="box-shadow:var(--shadow-md);">↑</button>
+  </div>
+  <script>
+    window.copyReportCitation = function() {
+      const title = document.title || 'HV Analysis 研报';
+      const url = window.location.href;
+      const quote = `【${title}】\n作者: WeiHaoran (HV Analysis)\n报告链接: ${url}`;
+      navigator.clipboard.writeText(quote).then(() => {
+        if (window.showToast) window.showToast('报告引用与链接已复制！');
+      });
+    };
+  </script>
+
+  <script src="../assets/js/core.js?v=20260909"></script>
 </body>
 
 </html>
